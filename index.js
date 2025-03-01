@@ -95,7 +95,9 @@ function buildPayload(args, severity, opts={}) {
 
   // if req and res passed, set httpRequest object
   // https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#HttpRequest
+  let originalUrl;
   if( params.req && params.res ) {
+    originalUrl = params.req.originalUrl;
     params.httpRequest = getHttpRequestObject(params.req, params.res, params.reqTimeInMs);
     if( params.req.corkTraceId ) {
       params.corkTraceId = params.req.corkTraceId;
@@ -131,7 +133,7 @@ function buildPayload(args, severity, opts={}) {
       params.message = params.httpRequest.requestMethod+' '+
         params.httpRequest.status+' '+
         params.httpRequest.latency+' '+
-        params.httpRequest.requestUrl;
+        (originalUrl || params.httpRequest.requestUrl);
     } else if( params.error ) {
       params.message = params.error.message;
     } else {
