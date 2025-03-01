@@ -1,6 +1,12 @@
 # logger
 Simple JSON logger based on a combo of Bunyan and GC Logging [LogEntry spec](https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry)
 
+Contents:
+- [Usage](#usage)
+- [Options](#options)
+- [How it works](#how-it-works)
+- [Logging Requests](#logging-requests)
+
 ## Usage
 ```javascript
 const {createLogger} = require('@ucd-lib/logger');
