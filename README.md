@@ -42,8 +42,6 @@ You can log as many arguments as you want.  Each argument should be a string or 
 Additionally `labelsProperties` will be moved to the `labelsKey` property if set.
 
 
-```javascript
-
 ## Logging Requests
 
 There is build in middleware for logging requests. 
