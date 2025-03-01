@@ -51,13 +51,12 @@ Additionally `labelsProperties` will be moved to the `labelsKey` property if set
 
 ## Logging Requests
 
-There is build in middleware for logging requests. 
+There is built in middleware for logging requests. 
 
 Example:
 ```javascript
 import express from 'express';
-import {logReqMiddleware} from '@ucd-lib/logger';
-import {createLogger} from '@ucd-lib/logger';
+import {logReqMiddleware, createLogger} from '@ucd-lib/logger';
 
 const app = express();
 const logger = createLogger({
@@ -71,13 +70,13 @@ app.get('/', (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log('Server running on port 3000');
+  logger.info('Server running on port 3000');
 });
 ```
 
 This middleware will:
   - Format the `req` and `res` objects as the [LogEntry HttpRequest object](https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#HttpRequest).
-  - Timing information will be added to the log message, added to the `latency` property.
+  - Timing information will be added to the log message, added to the `latency` property of the `httpRequest` object.
   - The log message will be logged at the `INFO` level unless the response status code is 5xx, in which case it will be logged at the `ERROR` level.
   - Check for the `corkTraceId` property on the `req` object or `cork-trace-id` in the headers. If found, add it to the log message as a label. If the `corkTraceId` property is not found, a new `corkTraceId` will be generated and added to the `req` object, `cork-trace-id` added to the `req.header` (for use by a later proxy), added to the log message as a label.
 
