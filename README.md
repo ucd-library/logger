@@ -29,7 +29,7 @@ logger.info('Hello World');
 | errorKeys  | LOG_ERROR_KEYS  | e, err, error  |
 
 - `name`: The name of the logger.  This will be the name of the log stream in the JSON output.
-- `level` : The log level.  One of `trace`, `debug`, `info`, `warn`, `error`, `fatal`.
+- `level` : The log level.  One of `trace`, `debug`, `info`, `warn`, `error`, `fatal`. All calls to the logger will be logged at this level or higher.
 - `hostname` : The hostname of the machine running the logger.
 - `labelsKey` : The key to use for labels in the JSON output.  Set to `false` to disable labels and all labels will stay in the root of the JSON output. Default is `logging.googleapis.com/labels` which is the key used by Google Cloud Logging.
 - `labelsProperties` : A comma separated list of properties to include in the labels object.
