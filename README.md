@@ -10,7 +10,7 @@ Contents:
 ## Usage
 ```javascript
 const {createLogger} = require('@ucd-lib/logger');
-const logger = new Logger({
+const logger = createLogger({
   name : 'my-logger'
 });
 
