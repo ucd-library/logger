@@ -16,9 +16,10 @@ let consoleMap = {
   error: 'error',
   fatal: 'error'
 }
-let errorKeys = ['err', 'error', 'e'];
+let ERROR_KEYS = ['err', 'error', 'e'];
 const LABELS_KEY = 'logging.googleapis.com/labels';
-const DEFAULT_LEVEL = (process.env.LOG_LEVEL || 'info').toLowerCase();
+const LOG_LABELS_PROPERTIES = ['name', 'hostname', 'corkTraceId'];
+const DEFAULT_LEVEL = 'info';
 
 /**
  * @function compareLevels
@@ -35,7 +36,10 @@ function compareLevels(a, b) {
 
 // formatted for: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry
 function getHttpRequestObject(req, res, reqTimeInMs) {
-  let latency = (reqTimeInMs / 1000).toFixed(3)+'s';
+  let latency = undefined;
+  if( reqTimeInMs !== undefined ) {
+    latency = (reqTimeInMs / 1000).toFixed(3)+'s';
+  }
 
   let o = {
     requestMethod: req.method,
@@ -109,7 +113,7 @@ function buildPayload(args, severity, opts={}) {
   }
 
   // check for error keys and serialize
-  (opts.errorKeys || errorKeys).forEach(key => {
+  opts.errorKeys.forEach(key => {
     if( params[key] && params[key] instanceof Error ) {
       params[key] = errorSerializer(params[key]);
     }
@@ -136,18 +140,12 @@ function buildPayload(args, severity, opts={}) {
   }
 
   // if no hostname, use opts.hostname or os.hostname()
-  if( !params.hostname ) {
-    if( opts.hostname ) {
-      params.hostname = opts.hostname;
-    } else {
-      params.hostname = hostname;
-    }
-  }
+  params.hostname = opts.hostname;
 
   // move some properties to labels
-  makeLabel(params, 'name', opts);
-  makeLabel(params, 'hostname', opts);
-  makeLabel(params, 'corkTraceId', opts);
+  opts.labelsProperties.forEach(key => {
+    makeLabel(params, key, opts);
+  });
 
   // set severity
   params.severity = severity;
@@ -167,6 +165,9 @@ function makeLabel(params, key, opts) {
   if( !params[key] ) {
     return;
   }
+  if( opts.labelsKey === false ) {
+    return;
+  }
   
   let labelsKey = opts.labelsKey || LABELS_KEY;
 
@@ -178,13 +179,44 @@ function makeLabel(params, key, opts) {
   delete params[key];
 }
 
-function createLogger(opts) {
+function createLogger(opts={}) {
   if( opts.src === undefined && process.env.LOG_SRC === 'true' ) {
     opts.src = true;
   }
 
+  if( !opts.name ) { 
+    opts.name = process.env.LOG_NAME || 'ucdlib-logger';
+  }
+
+  if( !opts.labelsKey && process.env.LOG_LABELS_KEY ) {
+    opts.labelsKey = process.env.LOG_LABELS_KEY || LABELS_KEY;
+    if( opts.labelsKey === 'false' ) {
+      opts.labelsKey = false;
+    }
+  }
+
+  if( !opts.labelsProperties && process.env.LOG_LABELS_PROPERTIES ) {
+    opts.labelsProperties = process.env.LOG_LABELS_PROPERTIES ? 
+      process.env.LOG_LABELS_PROPERTIES.split(',').map(p => p.trim()) :
+      LOG_LABELS_PROPERTIES;
+  }
+
+  if( !opts.hostname ) {
+    opts.hostname = process.env.LOG_HOSTNAME || hostname;
+  }
+
+  if( !opts.level ) {
+    opts.level = opts.level || process.env.LOG_LEVEL || DEFAULT_LEVEL;
+  }
+  opts.level = opts.level.toLowerCase();
+
+  if( !opts.errorKeys ) {
+    opts.errorKeys = process.env.LOG_ERROR_KEYS ?
+      process.env.LOG_ERROR_KEYS.split(',').map(k => k.trim()) : ERROR_KEYS;
+  }
+
   let logger = {
-    level : DEFAULT_LEVEL
+    level : opts.level
   };
 
   allLevels.forEach(level => {
@@ -202,6 +234,8 @@ function createLogger(opts) {
       // console[consoleMap[level]](JSON.stringify(log));
     };
   });
+
+  logger.info('Logger initialized', opts);
 
   return logger;
 }
