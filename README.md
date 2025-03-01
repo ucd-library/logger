@@ -37,8 +37,9 @@ logger.info('Hello World');
 
 ## How it works.
 
-You can log as many arguments as you want.  Each argument should be a string or an object.  All objects passed will be merged into a single object.  All strings will be concatenated into a single string sperated by a `;` and set as the `message` property of the log message. The following additional properties will be added to the log message:
+You can log as many arguments as you want.  Each argument should be a string or an object.  All objects passed will be merged into a single object.  All strings will be concatenated into a single string sperated by a `;` and set as the `message` property of the log object. The following properties will be added to the log object:
 
+- `message` : The string representation of all string arguments passed to the logger.
 - `name` : The name of the logger.
 - `hostname` : The hostname of the machine running the logger.
 - `time` : The current time in ISO format.
