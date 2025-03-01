@@ -1,7 +1,8 @@
 {
   "name": "@ucd-lib/logger",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "index.js",
+  "type":"module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,5 +11,8 @@
   "description": "",
   "dependencies": {
     "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "express": "^4.21.2"
   }
 }

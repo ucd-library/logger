@@ -1,5 +1,5 @@
-const os = require('os');
-const uuid = require('uuid');
+import os from 'os';
+import {v4 as uuid} from 'uuid';
 
 // docs on GC Logging special fields:
 // https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
@@ -149,6 +149,13 @@ function buildPayload(args, severity, opts={}) {
     makeLabel(params, key, opts);
   });
 
+  if( opts.labels ) {
+    for( let key in opts.labels ) {
+      params[key] = opts.labels[key];
+      makeLabel(params, key, opts);
+    }
+  }
+
   // set severity
   params.severity = severity;
 
@@ -190,14 +197,14 @@ function createLogger(opts={}) {
     opts.name = process.env.LOG_NAME || 'ucdlib-logger';
   }
 
-  if( !opts.labelsKey && process.env.LOG_LABELS_KEY ) {
+  if( !opts.labelsKey ) {
     opts.labelsKey = process.env.LOG_LABELS_KEY || LABELS_KEY;
     if( opts.labelsKey === 'false' ) {
       opts.labelsKey = false;
     }
   }
 
-  if( !opts.labelsProperties && process.env.LOG_LABELS_PROPERTIES ) {
+  if( !opts.labelsProperties ) {
     opts.labelsProperties = process.env.LOG_LABELS_PROPERTIES ? 
       process.env.LOG_LABELS_PROPERTIES.split(',').map(p => p.trim()) :
       LOG_LABELS_PROPERTIES;
@@ -256,7 +263,7 @@ function logReqMiddleware(logger) {
     let start = Date.now();
 
     if( !req.corkTraceId ) {
-      req.corkTraceId = req.get('cork-trace-id') || uuid.v4();
+      req.corkTraceId = req.get('cork-trace-id') || uuid();
     }
     if( !req.get('cork-trace-id') ) {
       req.headers['cork-trace-id'] = req.corkTraceId;
@@ -271,4 +278,4 @@ function logReqMiddleware(logger) {
 }
 
 
-module.exports = {logReqMiddleware, createLogger};
+export {logReqMiddleware, createLogger};
