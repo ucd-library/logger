@@ -20,6 +20,7 @@ let ERROR_KEYS = ['err', 'error', 'e'];
 const LABELS_KEY = 'logging.googleapis.com/labels';
 const LOG_LABELS_PROPERTIES = ['name', 'hostname', 'corkTraceId'];
 const DEFAULT_LEVEL = 'info';
+const DEFAULT_TIME_PROPERTY = 'time';
 
 /**
  * @function compareLevels
@@ -160,7 +161,7 @@ function buildPayload(args, severity, opts={}) {
   params.severity = severity;
 
   // set timestamp
-  params.time = new Date().toISOString();
+  params[opts.timeProperty] = new Date().toISOString();
 
   // if( opts.src ) {
   //   let src = new Error().stack.split('\n')[3].trim().match(/\(([^)]+)\)/);
@@ -224,6 +225,11 @@ function createLogger(opts={}) {
       process.env.LOG_ERROR_KEYS.split(',').map(k => k.trim()) : ERROR_KEYS;
   }
 
+  if( !opts.timeProperty ) {
+    opts.timeProperty = process.env.LOG_TIME_PROPERTY || DEFAULT_TIME_PROPERTY;
+  }
+
+
   let logger = {
     level : opts.level
   };
@@ -260,6 +266,10 @@ function createLogger(opts={}) {
  */
 function logReqMiddleware(logger) {
   return (req, res, next) => {
+    if( process.env.LOG_REQ === 'false' ) {
+      return next();
+    }
+
     let start = Date.now();
 
     if( !req.corkTraceId ) {

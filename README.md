@@ -27,13 +27,15 @@ logger.info('Hello World');
 | labelsKey | LOG_LABELS_KEY | logging.googleapis.com/labels |
 | labelsProperties | LOG_LABELS_PROPERTIES | name, hostname, corkTraceId |
 | errorKeys  | LOG_ERROR_KEYS  | e, err, error  |
+| timeProperty | LOG_TIME_PROPERTY | time |
 
 - `name`: The name of the logger.  This will be the name of the log stream in the JSON output.
 - `level` : The log level.  One of `trace`, `debug`, `info`, `warn`, `error`, `fatal`. All calls to the logger will be logged at this level or higher.
 - `hostname` : The hostname of the machine running the logger.
-- `labelsKey` : The key to use for labels in the JSON output.  Set to `false` to disable labels and all labels will stay in the root of the JSON output. Default is `logging.googleapis.com/labels` which is the key used by Google Cloud Logging.
+- `labelsKey` : The key to use for labels in the JSON output.  Set to `false` to disable labels and all label properties will stay in the root of the JSON output. Default is `logging.googleapis.com/labels` which is the key used by Google Cloud Logging.
 - `labelsProperties` : A comma separated list of properties to include in the labels object.
 - `errorKeys` : A comma separated list of keys to look for in the log message objects for an an `Error` object.  If an error object is found, it will be serialized and added to the log message.
+- `timeProperty` : The property to use for the time in the log message.  Default is `time`.
 
 ## How it works.
 
@@ -84,3 +86,6 @@ Alternatively, you could, though not receommended, log the request manually:
 ```javascript
 logger.info({req, res, reqTimeInMs});
 ```
+
+Options:
+ - `LOG_REQ` : Set to `false` to disable request logging. Default is `true`.  This is usefule for environments such as Google Cloud Run where the request logs are already captured.
