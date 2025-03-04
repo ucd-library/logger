@@ -88,4 +88,12 @@ logger.info({req, res, reqTimeInMs});
 ```
 
 Options:
- - `LOG_REQ` : Set to `false` to disable request logging. Default is `true`.  This is usefule for environments such as Google Cloud Run where the request logs are already captured.
+| Option | Env Var | Default Value |
+|----------|----------|----------|
+| [not available ] | LOG_REQ | true |
+| ignore | LOG_REQ_IGNORE | null  |
+| debug | LOG_REQ_DEBUG | null |
+
+ - `LOG_REQ` : Env var only. Set to `false` to disable request logging. Default is `true`.  This is usefule for environments such as Google Cloud Run where the request logs are already captured.
+ - `ignore` : Array of RegExp objects or a single string with comma separated regular expressions.  If the request path matches any of the RegExps, the request will not be logged.
+ - `debug` : Array of RegExp objects or a single string with comma separated regular expressions.  If the request path matches any of the RegExps, the request will be logged at the `DEBUG` level.

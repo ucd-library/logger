@@ -8,6 +8,9 @@ exports.logReqMiddleware = logReqMiddleware;
 var _os = _interopRequireDefault(require("os"));
 var _uuid = require("uuid");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { "default": e }; }
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 // docs on GC Logging special fields:
 // https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
@@ -104,6 +107,13 @@ function buildPayload(args, severity) {
     if (_typeof(arg) === 'object') {
       if (arg instanceof Error) {
         params.error = errorSerializer(arg);
+        return;
+      } else if (Array.isArray(arg)) {
+        if (Array.isArray(params.values)) {
+          params.values = params.values.concat(arg);
+        } else {
+          params.values = arg;
+        }
         return;
       }
       Object.assign(params, arg);
@@ -256,12 +266,73 @@ function createLogger() {
  * Additionally, adds a corkTraceId to the request object and header if it does not already exist.
  * 
  * @param {Object} logger instance of a logger created by createLogger 
+ * @param {Object} opts options object
+ * @param {Array} opts.ignore array of regular expressions when matched to req path will not log
  * @returns 
  */
 function logReqMiddleware(logger) {
+  var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var ignore = process.env.LOG_REQ_IGNORE || opts.ignore || null;
+  if (ignore) {
+    if (typeof ignore === 'string') {
+      ignore = ignore.split(',').map(function (i) {
+        return i.trim();
+      }).filter(function (i) {
+        return i.length > 0;
+      }).map(function (i) {
+        return new RegExp(i);
+      });
+    }
+  }
+  var debug = process.env.LOG_REQ_DEBUG || opts.debug || null;
+  if (debug) {
+    if (typeof debug === 'string') {
+      debug = debug.split(',').map(function (i) {
+        return i.trim();
+      }).filter(function (i) {
+        return i.length > 0;
+      }).map(function (i) {
+        return new RegExp(i);
+      });
+    }
+  }
   return function (req, res, next) {
     if (process.env.LOG_REQ === 'false') {
       return next();
+    }
+    if (ignore) {
+      var _iterator = _createForOfIteratorHelper(ignore),
+        _step;
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var re = _step.value;
+          if (re.test(req.originalUrl)) {
+            return next();
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+    }
+    var level = 'info';
+    if (debug) {
+      var _iterator2 = _createForOfIteratorHelper(debug),
+        _step2;
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var _re = _step2.value;
+          if (_re.test(req.originalUrl)) {
+            level = 'debug';
+            break;
+          }
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
+      }
     }
     var start = Date.now();
     if (!req.corkTraceId) {
@@ -272,7 +343,7 @@ function logReqMiddleware(logger) {
     }
     res.on('finish', function () {
       var reqTimeInMs = Date.now() - start;
-      logger.info({
+      logger[level]({
         req: req,
         res: res,
         reqTimeInMs: reqTimeInMs
